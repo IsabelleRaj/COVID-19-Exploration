@@ -6,6 +6,9 @@ SKILLS USED: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, 
 */
 
 -- Select the data to use
+DESCRIBE covid_deaths;
+
+
 
 SELECT 
  location AS Country,
