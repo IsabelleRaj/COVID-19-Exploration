@@ -5,11 +5,6 @@ DESCRIPTION: Data exploration of global COVID-19 data.
 SKILLS USED: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
 */
 
--- Select the data to use
-DESCRIBE covid_deaths;
-
-
-
 SELECT 
  location AS Country,
  date AS Date,
