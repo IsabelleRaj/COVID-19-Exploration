@@ -1,8 +1,17 @@
 #  Data exploration of global COVID-19 data
 
-In this project, I conducted data exploratory analysis using SQL on COVID-19 data obtained between 2020-01-01 to 2023-12-07 by Our World in Data (downloaded from: ourworldindata.org/covid-deaths). 
+In this project, I conducted data exploratory analysis using SQL (DB browser (SQLite)) on COVID-19 data. 
 
-I adapted this project from Alex The Analyst (youtube.com/@AlexTheAnalyst) in which I investigated COVID cases, deaths and vaccinations by location (contry and continents) and date. Additionally, I explored how income type affects case, death and vaccination totals. I used DB browser (SQLite) to conduct my analyses. The SQL queries can be found in the code folder, and the .csv data files in the data folder.
+### Data collection
+The data obtained between 2020-01-01 to 2023-12-07 by Our World in Data (downloaded from: ourworldindata.org/covid-deaths). 
+
+### Data preprocessing
+The downloaded data was processed in Excel for date format standardisation (converting 'dd/mm/yyyy' to 'yyyy-mm-dd') and to seperate the data into two tables: covid_deaths.csv and covid_vaccinations.csv files.
+
+### Data exploration
+I investigated COVID cases, deaths and vaccinations by location (contry and continents) and date. Additionally, I explored how income type affects case, death and vaccination totals. 
 
 Skills used: Joins, CTE's, temp Tables, windows functions, aggregate functions, view creations and data type conversion. 
-  
+
+### Acknowledgements
+Thanks to Alex The Analyst (youtube.com/@AlexTheAnalyst) from which this project was adapted from.
