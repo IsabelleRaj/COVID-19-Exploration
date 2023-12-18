@@ -96,17 +96,3 @@ WHERE
 ORDER BY
  location,
  date;
- 
- 
--- Potential: Total deaths by country
--- SELECT
---  location AS Country,
---  SUM(CAST(new_deaths AS INT)) AS TotalDeaths
--- FROM
---  covid_deaths
--- WHERE
---  continent IS NOT NULL
--- GROUP BY 
---  location
--- ORDER BY
---  location; 
