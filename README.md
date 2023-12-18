@@ -13,5 +13,8 @@ I investigated COVID cases, deaths and vaccination numbers across locations i.e.
 
 Skills used: Joins, CTE's, temp Tables, windows functions, aggregate functions, view creations and data type conversion. 
 
+### 4. Data Visualisation on Tableau
+I created a tableau dashboard accessed displaying Covid-19 cases and deaths. This can be accessed via https://public.tableau.com/app/profile/isabelle.rajendiran/viz/Covid-19CaseandDeathDashboard/Dashboard1. The specific queries used for this dashboard can be found as tableau_case_death_queries.sql. 
+
 ### Acknowledgements
 Thanks to Alex The Analyst (youtube.com/@AlexTheAnalyst) from which this project was adapted from.
