@@ -1,6 +1,6 @@
 #  Data exploration of global COVID-19 data
 
-In this project, I conducted data exploratory analysis using SQL (DB browser (SQLite)) on COVID-19 data. 
+In this project, I conducted data analysis using SQL (DB browser (SQLite)) on COVID-19 data. 
 
 ### 1. Data collection
 The data obtained between 2020-01-01 to 2023-12-07 by Our World in Data (downloaded from: ourworldindata.org/covid-deaths). 
