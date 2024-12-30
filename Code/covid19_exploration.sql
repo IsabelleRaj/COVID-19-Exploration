@@ -418,8 +418,8 @@ ORDER BY
 SELECT
  dea.location AS IncomeType,
  dea.date AS Date,
- coalesce(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic with no cases/deaths
- coalesce(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
+ COALESCE(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic with no cases/deaths
+ COALESCE(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
  ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
 FROM
  covid_deaths AS dea
