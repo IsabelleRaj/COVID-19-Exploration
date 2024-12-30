@@ -1,159 +1,69 @@
 /* 
-CREATED BY: ISABELLE RAJENDIRAN 
+-------------------------------------------------------------------------------
+CREATED BY:	  ISABELLE RAJENDIRAN 
 CREATED DATE: 2023-12-08 
-DESCRIPTION: Data exploration of global COVID-19 data. 
-SKILLS USED: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
+LAST UPDATED: 2024-12-30
+DESCRIPTION:  Data exploration of global COVID-19 data, with a focus on 
+		  location and income groups.
+-------------------------------------------------------------------------------
+MODIFICATION HISTORY:
+- 2024-12-30
+	- Added additional queries, restructured the code and added comments 
+	  throughout.
+-------------------------------------------------------------------------------
 */
 
--- Select the data to use
+-- **INITIAL EXPLORATION** --
+
+-- 1: Initial observation of the covid_deaths and covid_vaccinations datasets
+SELECT 
+ *
+FROM
+ covid_deaths
+LIMIT 10;
 
 SELECT 
- location AS Country,
- date AS Date,
- total_cases AS TotalCases,
- total_deaths AS TotalDeaths,
- population AS PopulationSize
+ *
 FROM
- covid_deaths
-WHERE
- continent IS NOT NULL  -- Note: Where continent is NULL, continent information is found in the location column which we do not want
-ORDER BY
- location,
- date;
-
--- EXPLORATION BY LOCATION
+ covid_vaccinations
+LIMIT 10;
  
--- Total cases vs total deaths
--- Demonstrates likelihood of death upon contracting COVID-19 in each country
-
-SELECT
- location AS Country,
- date AS Date,
- total_cases AS TotalCases,
- total_deaths AS TotalDeaths,
- round((total_deaths*1.0)/(total_cases*1.0)*100, 3) as DeathRatePercentage
+-- 2: Investigation of the location and continent columns
+SELECT 
+ DISTINCT(continent)
 FROM
- covid_deaths
-WHERE
- continent IS NOT NULL 
-ORDER BY
- location,
- date;
-
--- Total cases vs total deaths as of the 6th december 2023
-
-SELECT
- location AS Country,
- date AS Date,
- total_cases AS TotalCases,
- total_deaths AS TotalDeaths,
- round((total_deaths*1.0)/(total_cases*1.0)*100, 3) as DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL AND date = '2023-12-06'
-ORDER BY
- location;
- 
--- Alternative - Date differs as it is the last updated date for that country
-SELECT
- location AS Country,
- date as Date,
- MAX(total_cases*1) AS TotalCases, 
- MAX(total_deaths*1) AS TotalDeaths, 
- round((MAX(total_deaths*1.0)/MAX(total_cases*1.0))*100,3) as DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL
-GROUP BY
- location
-ORDER BY
- location;
-
--- Total cases vs population
--- Shows the percentage of the population who are infected with COVID-19
+ covid_deaths;
 
 SELECT 
- location AS Country,
- date AS Date,
- population AS PopulationSize,
- total_cases AS TotalCases,
- round(((total_cases*1.0)/population)*100, 5) as PopulationInfectedPercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL 
-ORDER BY
- location,
- date;
-
--- Countries with the highest infection rate compared to population
-
-SELECT
- location AS Country,
- population AS PopulationSize,
- MAX(total_cases*1) AS TotalCases, 
- MAX(round((total_cases * 1.0 / population) * 100, 3)) AS PopulationInfectedPercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL
-GROUP BY
- location
-ORDER BY
- MAX(round((total_cases * 1.0 / population) * 100, 3)) DESC;
-
---  Countries with the highest death count compared to population
-
-SELECT
- location AS Country,
- population AS PopulationSize,
- MAX(total_deaths*1) AS TotalDeaths, 
- MAX(round((total_deaths * 1.0 / population) * 100, 3)) AS DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL
-GROUP BY
- location
-ORDER BY
- MAX(round((total_deaths * 1.0 / population) * 100, 3)) DESC;
-
--- EXPLORATION BY CONTINENT 
-
--- Continents with the highest death count compared to population
-
-SELECT
- continent AS Continent,
- population AS PopulationSize,
- MAX(total_deaths*1) AS TotalDeaths, 
- MAX(round((total_deaths * 1.0 / population) * 100, 3)) AS DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL
-GROUP BY
- continent
-ORDER BY
- MAX(round((total_deaths * 1.0 / population)* 100, 3)) DESC;
- 
--- NOTE: There are cases listed with NULL continent information so this data is not accurate. 
--- Additionally, there is continent information within location column where continent is NULL sometimes (following query)
-
-SELECT
- location,
- continent
+ DISTINCT(location)
 FROM
  covid_deaths
 WHERE
  continent IS NULL
-GROUP BY
+ORDER BY
  location;
+ 
+-- NOTE: There are null values in the continent column. For records with null continent values, the location (country) column 
+-- contains the continents, 'World' and income type information instead. For country analyses, only records with non-null continent will be used. 
 
--- GLOBAL NUMBERS
 
--- Cumulative increase in COVID-19 cases and deaths globally
+-- **GLOBAL OVERVIEW** --
+
+-- 1: Total number of global cases and deaths
+
+SELECT
+ SUM(CAST(new_cases AS INT)) AS TotalCases,
+ SUM(CAST(new_deaths AS INT)) AS TotalDeaths,
+ (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL
+ORDER BY
+ TotalCases,
+ TotalDeaths;
+
+-- 2: Time series showing the cumulative increase in COVID-19 cases and deaths globally
 
 SELECT DISTINCT
  date AS Date,
@@ -164,12 +74,12 @@ FROM
 WHERE
  continent IS NOT NULL;
  
--- Daily COVID-19 new cases and deaths globally
+-- 3: Time series showing the daily COVID-19 new cases and new deaths globally
 
 SELECT
  date AS Date,
- sum(CAST(new_cases AS INT)) AS NewCases,
- sum(CAST(new_deaths AS INT)) AS NewDeaths
+ SUM(CAST(new_cases AS INT)) AS NewCases,
+ SUM(CAST(new_deaths AS INT)) AS NewDeaths
 FROM
  covid_deaths
 WHERE
@@ -177,9 +87,145 @@ WHERE
 GROUP BY
  date
 
--- VACCINATION TABLES
+-- **EXPLORATION BY COUNTRY** --
+ 
+-- 1: Time series of the total cases, total deaths and death rate across countries
+-- Demonstrates likelihood of death upon contracting COVID-19 in each country
 
--- Total vaccination count per country
+SELECT
+ location AS Country,
+ date AS Date,
+ total_cases AS TotalCases,
+ total_deaths AS TotalDeaths,
+ ROUND((total_deaths*1.0)/(total_cases*1.0)*100, 5) AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL 
+ORDER BY
+ location,
+ date;
+
+-- 2: Total cases vs total deaths AS of the last updated date for each country (mostly 2023-12-06)
+
+SELECT
+ location AS Country,
+ MAX(date) AS Date,
+ total_cases AS TotalCases,
+ total_deaths AS TotalDeaths,
+ ROUND((total_deaths*1.0)/(total_cases*1.0)*100, 5) AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL AND 
+ date IS NOT '2023-12-07'  -- Some countries have 2023-12-07 AS an empty (null) record
+GROUP BY 
+ location
+ORDER BY
+ location;
+ 
+/* 
+NOTE: 11 countries seem to have null values for TotalCases, TotalDeaths and DeathRatePercentage e.g., England, Western Sahara.
+Looking at the dataset, this could be due to some countries being counted AS part of another Country e.g., England, Wales, Scotland and Northern Ireland 
+are counted AS 'United Kingdom'. For other countries, the data is missing entirely.
+*/
+
+SELECT 
+ *
+FROM (
+	SELECT
+	 location AS Country,
+	 MAX(date) AS Date,
+	 total_cases AS TotalCases,
+	 total_deaths AS TotalDeaths,
+	 ROUND((total_deaths*1.0)/(total_cases*1.0)*100, 5) AS DeathRatePercentage
+	FROM
+	 covid_deaths
+	WHERE
+	 continent IS NOT NULL AND 
+	 date IS NOT '2023-12-07'
+	GROUP BY 
+	 location
+	ORDER BY
+	 location
+	)
+WHERE
+ TotalCases IS NULL; -- Countries with missing data
+
+-- 3: Time series of the population infection rate across countries
+-- Shows the percentage of the population who are infected with COVID-19
+
+SELECT 
+ location AS Country,
+ date AS Date,
+ population AS PopulationSize,
+ total_cases AS TotalCases,
+ ROUND(((total_cases*1.0)/population)*100, 5) AS PopulationInfectedPercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL 
+ORDER BY
+ location,
+ date;
+
+-- 4: Countries in the order of highest population infection rate
+
+SELECT
+ location AS Country,
+ population AS PopulationSize,
+ MAX(total_cases*1) AS TotalCases, 
+ MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL
+GROUP BY
+ location
+ORDER BY
+ MAX(ROUND((total_cases*1.0/population)*100,5)) DESC;
+
+-- 5: Countries in the order of highest death count compared to population
+
+SELECT
+ location AS Country,
+ population AS PopulationSize,
+ MAX(total_deaths*1) AS TotalDeaths, 
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL
+GROUP BY
+ location
+ORDER BY
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) DESC;
+
+-- **EXPLORATION BY CONTINENT** --
+
+-- 1: Total cases, deaths and population-level statistics by continent
+ 
+SELECT 
+ location AS Continent,
+ population AS PopulationSize,
+ MAX(total_cases*1) AS TotalCases, 
+ MAX(total_deaths*1) AS TotalDeaths, 
+ MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
+ ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
+ -- Alternative: (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ location in ('Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania') -- Alternative to continent IS NULL
+GROUP BY 
+ location
+ORDER BY
+ 1,2; 
+
+-- **EXPLORATION OF VACCINATION DATA** --
+
+-- 1: Total vaccination count per country
 
 SELECT
  dea.location AS Country,
@@ -191,8 +237,8 @@ FROM
 JOIN
  covid_vaccinations AS vac 
 ON
- dea.location = vac.location 
- AND dea.date = vac.date 
+ dea.location = vac.location AND
+ dea.date = vac.date 
 WHERE
  dea.continent IS NOT NULL
 GROUP BY
@@ -200,10 +246,13 @@ GROUP BY
 ORDER BY
  1,2;
 
--- Rolling count of vaccinations in each country
--- NOTE: Despite not including the new_boosters column, the cumulative vaccination exceeds the population size
--- for certaion countries implying the new_vaccinations could include the boosters so multiple vaccinations per person
+-- 2: Rolling/cumulative count of vaccinations in each country
 
+-- NOTE: Despite not including the new_boosters column, the cumulative vaccination exceeds the population size
+-- for certaion countries implying the new_vaccinations could include the boosters so multiple vaccinations per person.
+
+DROP VIEW IF EXISTS PopulationVaccinatedView;
+CREATE VIEW PopulationVaccinatedView AS -- Save this AS a view to perform further queries on it
 SELECT
  dea.continent AS Continent,
  dea.location AS Country,
@@ -222,15 +271,28 @@ WHERE
  dea.continent IS NOT NULL
 ORDER BY
  2,3;
+ 
+SELECT
+ * 
+FROM 
+ PopulationVaccinatedView;
 
--- Total vaccinations vs population
--- Shows the percentage of the population who are vaccinnated against COVID-19. NOTE: Exceeds 100% possibly due to 
--- inclusion of boosters so multiple vaccines per person.
+-- 3: Total vaccinations vs population
+-- Shows the percentage of the population who are vaccinnated against COVID-19. 
 
--- Using CTE to perform calculation on CumulativeVaccinationTotal in previous query
+-- NOTE: Exceeds 100% possibly due to inclusion of boosters so multiple vaccines per person.
+-- Uses the view created in the previous query
+SELECT 
+ *,
+ (CAST(CumulativeVaccinationTotal AS FLOAT)/CAST(PopulationSize AS FLOAT))*100 AS PercentPopulationVaccinated
+FROM 
+ PopulationVaccinatedView;
+
+/*
+-- Alternative: Using CTE instead of a view
 
 with PopvsVac (Continent, Country, Date, PopulationSize , NewVaccinations, CumulativeVaccinationTotal)
-as 
+AS 
 (
 SELECT
  dea.continent AS Continent,
@@ -252,10 +314,9 @@ WHERE
 SELECT *, (CAST(CumulativeVaccinationTotal AS FLOAT)/CAST(PopulationSize AS FLOAT))*100 AS PercentPopulationVaccinated
 FROM PopvsVac;
 
--- Using temp table to perform calculation on CumulativeVaccinationTotal in previous query
+-- Alternative: Using a temporary table instead of a view
 
--- DROP Table IF EXISTS PercentPopulationVaccinated;
-
+DROP Table IF EXISTS PercentPopulationVaccinated;
 CREATE TABLE PercentPopulationVaccinated
 (
 Continent nvarchar(255),
@@ -284,46 +345,54 @@ ON
 WHERE
  dea.continent IS NOT NULL;
  
-SELECT *, (CAST(CumulativeVaccinationTotal AS FLOAT)/CAST(PopulationSize AS FLOAT))*100 AS PercentPopulationVaccinated
-FROM PercentPopulationVaccinated;
+SELECT 
+ *, 
+(CAST(CumulativeVaccinationTotal AS FLOAT)/CAST(PopulationSize AS FLOAT))*100 AS PercentPopulationVaccinated
+FROM 
+ PercentPopulationVaccinated;
+*/
 
--- Creating views to store data for later visualisation
+-- **EXPLORATION OF INCOME TYPE** --
 
--- CREATE VIEW PercentPopulationVaccinatedView as
-SELECT *, (CAST(CumulativeVaccinationTotal AS FLOAT)/CAST(PopulationSize AS FLOAT))*100 AS PercentPopulationVaccinated
-FROM PercentPopulationVaccinated;
-
-SELECT *
-FROM PercentPopulationVaccinatedView;
+-- 0: There are 4 categories: Low income, Lower middle income, Upper middle income and High income
+SELECT
+ location AS IncomeType
+FROM
+ covid_deaths
+WHERE
+ continent IS NULL AND
+ location LIKE '%income'
+GROUP BY
+ location;
  
--- Exploring income type as a variable affecting total cases, deaths and vaccinations (at least 1 vaccine)
+-- 1: Total number of cases and deaths across all income groups
 
 SELECT
- dea.location AS IncomeType
+ SUM(CAST(new_cases AS INT)) AS TotalCases,
+ SUM(CAST(new_deaths AS INT)) AS TotalDeaths,
+ (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 AS DeathRatePercentage
 FROM
- covid_deaths AS dea
-JOIN
- covid_vaccinations AS vac 
-ON
- dea.location = vac.location 
- AND dea.date = vac.date 
+ covid_deaths
 WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
-GROUP BY
- dea.location;
+ continent IS NULL AND
+ location LIKE '%income'
+ORDER BY
+ TotalCases,
+ TotalDeaths;
 
---CREATE VIEW IncomeView as
+-- 2: Exploring the total cases, deaths and vaccinations (at least 1 vaccine) for each income group
+
+--CREATE VIEW IncomeView AS
 SELECT
  dea.location AS IncomeType,
  dea.population AS PopulationSize,
  MAX(CAST(dea.total_cases AS INT)) AS TotalCases,
  MAX(CAST(dea.total_deaths AS INT)) AS TotalDeaths, 
  MAX(CAST(vac.total_vaccinations AS INT)) AS TotalVaccinationsGiven,
- MAX(vac.people_vaccinated) AS TotalPeopleVaccinated,
  MAX(CAST(vac.people_vaccinated AS INT)) AS TotalPeopleVaccinated,
- round((MAX(dea.total_deaths*1.0)/MAX(dea.total_cases*1.0))*100,3) as DeathRatePercentage,
- round((MAX(dea.total_cases*1.0)/dea.population)*100,3) as PopulationInfectedPercentage,
- round((MAX(vac.people_vaccinated*1.0)/dea.population)*100,3) as PopulationVaccinatedPercentage
+ ROUND((MAX(dea.total_deaths*1.0)/MAX(dea.total_cases*1.0))*100,5) AS DeathRatePercentage,
+ ROUND((MAX(dea.total_cases*1.0)/dea.population)*100,5) AS PopulationInfectedPercentage,
+ ROUND((MAX(vac.people_vaccinated*1.0)/dea.population)*100,5) AS PopulationVaccinatedPercentage
 FROM
  covid_deaths AS dea
 JOIN
@@ -332,11 +401,39 @@ ON
  dea.location = vac.location 
  AND dea.date = vac.date 
 WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
+ dea.continent IS NULL AND 
+ dea.location LIKE '%income'
 GROUP BY
  dea.location
 ORDER BY
-  CASE
+  CASE -- Order by a custom order
+    WHEN dea.location = 'Low income' THEN 1
+    WHEN dea.location = 'Lower middle income' THEN 2
+    WHEN dea.location = 'Upper middle income' THEN 3
+    WHEN dea.location = 'High income' THEN 4
+  END; 
+  
+-- 3: Time series of the infection, death and vaccination rates by income group
+
+SELECT
+ dea.location AS IncomeType,
+ dea.date AS Date,
+ coalesce(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic with no cases/deaths
+ coalesce(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
+ ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
+FROM
+ covid_deaths AS dea
+JOIN
+ covid_vaccinations AS vac 
+ON
+ dea.location = vac.location 
+ AND dea.date = vac.date 
+WHERE
+ dea.continent IS NULL AND 
+ dea.location LIKE '%income' AND
+ dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
+ORDER BY
+  CASE -- Order by a custom order    
     WHEN dea.location = 'Low income' THEN 1
     WHEN dea.location = 'Lower middle income' THEN 2
     WHEN dea.location = 'Upper middle income' THEN 3

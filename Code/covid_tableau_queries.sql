@@ -1,13 +1,23 @@
 /* 
-CREATED BY: ISABELLE RAJENDIRAN 
+-------------------------------------------------------------------------------
+CREATED BY:	  ISABELLE RAJENDIRAN 
 CREATED DATE: 2023-12-18 
-DESCRIPTION: Global COVID-19 data queries for data visualisation using Tableau
+LAST UPDATED: 2024-12-30
+DESCRIPTION:  Queries for the visualisation of the COVID-19 data exploration, 
+		  using Tableau
+-------------------------------------------------------------------------------
+MODIFICATION HISTORY:
+- 2024-12-30
+	- Added additional queries, restructured the code and added comments 
+	  throughout.
+-------------------------------------------------------------------------------
 */
 
--- Global case and death count Dashboard
+-- **GENERAL/LOCATION DASHBOARD** --
 
 -- 1: Total number of global cases and deaths
 
+CREATE VIEW TableauLocationOne AS
 SELECT
  SUM(CAST(new_cases AS INT)) AS TotalCases,
  SUM(CAST(new_deaths AS INT)) AS TotalDeaths,
@@ -20,9 +30,8 @@ ORDER BY
  TotalCases,
  TotalDeaths;
  
--- Stating continent IS NOT NULL is needed to remove these locations: 'World', 'European Union', 'High income','Low income',
+-- NOTE: Stating continent IS NOT NULL is needed to remove these locations: 'World', 'European Union', 'High income','Low income',
 -- 'Lower middle income', 'Upper middle income' 
-
 SELECT
  location
 FROM
@@ -32,42 +41,38 @@ WHERE
 GROUP BY
  location;
 
--- 2: Total deaths by continent
+-- 2: Total cases, deaths and population-level statistics by continent
 
-SELECT
- continent AS Continent,
- SUM(CAST(new_deaths AS INT)) AS TotalDeaths
+CREATE VIEW TableauLocationTwo AS
+SELECT 
+ location AS Continent,
+ population AS PopulationSize,
+ MAX(total_cases*1) AS TotalCases, 
+ MAX(total_deaths*1) AS TotalDeaths, 
+ MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
+ ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
+ -- Alternative: (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 AS DeathRatePercentage
 FROM
  covid_deaths
 WHERE
- continent IS NOT NULL
+ location in ('Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania') -- Alternative to continent IS NULL
 GROUP BY 
- continent
+ location
 ORDER BY
  1,2; 
- 
--- Alternative
--- SELECT
---  location AS Continent,
---  SUM(CAST(new_deaths AS INT)) AS TotalDeaths
--- FROM
---  covid_deaths
--- WHERE
---  continent IS NULL
---  AND location NOT IN ('World', 'European Union', 'High income','Low income', 'Lower middle income', 'Upper middle income')
--- GROUP BY
---  location;
 
--- 3: Total case count by country 
+-- 3: Total cases, deaths and population-level statistics by country
 
--- Note: Need to remove countries with NULL cases before importing to Tableau. Cannot assume case count is 0 - we just don't
--- have the data in this case.  
-
+CREATE VIEW TableauLocationThree AS
 SELECT
  location AS Country,
  population AS PopulationSize,
- MAX(total_cases*1) AS TotalCases, 
- MAX((total_cases * 1.0 / population) * 100) AS PopulationInfectedPercentage
+ MAX(total_cases*1) AS TotalCases,
+ MAX(total_deaths*1) AS TotalDeaths, 
+ MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
+ ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
 FROM
  covid_deaths
 WHERE
@@ -75,34 +80,44 @@ WHERE
 GROUP BY
  location
 HAVING
- TotalCases IS NOT NULL
+ TotalCases IS NOT NULL -- Note: Need to remove countries with NULL cases before importing to Tableau. Cannot assume case count is 0 - we just don't have the data in this case.  
 ORDER BY
  PopulationInfectedPercentage DESC;
  
--- 4: Cumulative case count by country
+-- 4: Time series of the total cases, death, infection and vaccination rate across countries
 
 -- Note: The population size is constant for each country implying the population size stated is latest known population 
 -- as of date of download and not during the date stated.
--- Also, can change NULL to 0 here as there are 0 cases before the first case.
 
-SELECT 
- location AS Country,
- date AS Date,
- population AS PopulationSize,
- coalesce(total_cases,0) AS TotalCases,
- coalesce(((total_cases*1.0)/population)*100,0) as PopulationInfectedPercentage
+CREATE VIEW TableauLocationFour AS
+SELECT
+ dea.location AS Country,
+ dea.date AS Date,
+ dea.population AS PopulationSize,
+ coalesce(dea.total_cases,0) AS TotalCases,
+ coalesce(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic before the first case/death
+ coalesce(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
+ ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
 FROM
- covid_deaths
+ covid_deaths AS dea
+JOIN
+ covid_vaccinations AS vac 
+ON
+ dea.location = vac.location 
+ AND dea.date = vac.date 
 WHERE
- continent IS NOT NULL 
+ dea.continent IS NOT NULL AND
+ dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
 ORDER BY
- location,
- date;
+ dea.location,
+ dea.date;
  
--- Income Type Dashboard
+-- **INCOME DASHBOARD** --
 
-DROP VIEW IF EXISTS IncomeView;
-CREATE VIEW IncomeView AS
+-- 1: Exploring the total cases, deaths and vaccinations for each income group
+
+--DROP VIEW IF EXISTS TableauIncomeOne;
+CREATE VIEW TableauIncomeOne AS
 SELECT
  dea.location AS IncomeType,
  dea.population AS PopulationSize,
@@ -110,9 +125,9 @@ SELECT
  MAX(CAST(dea.total_deaths AS INT)) AS TotalDeaths, 
  MAX(CAST(vac.total_vaccinations AS INT)) AS TotalVaccinationsGiven,
  MAX(CAST(vac.people_vaccinated AS INT)) AS TotalPeopleVaccinated,
- (MAX(dea.total_deaths*1.0)/MAX(dea.total_cases*1.0))*100 as DeathRatePercentage,
- (MAX(dea.total_cases*1.0)/dea.population)*100 as PopulationInfectedPercentage,
- (MAX(vac.people_vaccinated*1.0)/dea.population)*100 as PopulationVaccinatedPercentage
+ ROUND((MAX(dea.total_deaths*1.0)/MAX(dea.total_cases*1.0))*100,5) AS DeathRatePercentage,
+ ROUND((MAX(dea.total_cases*1.0)/dea.population)*100,5) AS PopulationInfectedPercentage,
+ ROUND((MAX(vac.people_vaccinated*1.0)/dea.population)*100,5) AS PopulationVaccinatedPercentage
 FROM
  covid_deaths AS dea
 JOIN
@@ -121,27 +136,27 @@ ON
  dea.location = vac.location 
  AND dea.date = vac.date 
 WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
+ dea.continent IS NULL AND 
+ dea.location LIKE '%income'
 GROUP BY
  dea.location
 ORDER BY
-  CASE
+  CASE -- Order by a custom order
     WHEN dea.location = 'Low income' THEN 1
     WHEN dea.location = 'Lower middle income' THEN 2
     WHEN dea.location = 'Upper middle income' THEN 3
     WHEN dea.location = 'High income' THEN 4
   END; 
   
-SELECT *
-FROM
- IncomeView;
- 
--- Time series: Death rate 
+-- 2: Time series of the infection, death and vaccination rates by income group
 
+CREATE VIEW TableauIncomeTwo AS
 SELECT
  dea.location AS IncomeType,
  dea.date AS Date,
- coalesce(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) as DeathRatePercentage
+ coalesce(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic with no cases/deaths
+ coalesce(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
+ ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
 FROM
  covid_deaths AS dea
 JOIN
@@ -150,56 +165,11 @@ ON
  dea.location = vac.location 
  AND dea.date = vac.date 
 WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
+ dea.continent IS NULL AND 
+ dea.location LIKE '%income' AND
+ dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
 ORDER BY
-  CASE
-    WHEN dea.location = 'Low income' THEN 1
-    WHEN dea.location = 'Lower middle income' THEN 2
-    WHEN dea.location = 'Upper middle income' THEN 3
-    WHEN dea.location = 'High income' THEN 4
-  END; 
- 
--- Time series: Population Infected Percentage
-
-SELECT
- dea.location AS IncomeType,
- dea.date AS Date,
- coalesce(((dea.total_cases*1.0)/dea.population)*100,0) as PopulationInfectedPercentage
---  ((vac.people_vaccinated*1.0)/dea.population)*100 as PopulationVaccinatedPercentage
-FROM
- covid_deaths AS dea
-JOIN
- covid_vaccinations AS vac 
-ON
- dea.location = vac.location 
- AND dea.date = vac.date 
-WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
-ORDER BY
-  CASE
-    WHEN dea.location = 'Low income' THEN 1
-    WHEN dea.location = 'Lower middle income' THEN 2
-    WHEN dea.location = 'Upper middle income' THEN 3
-    WHEN dea.location = 'High income' THEN 4
-  END; 
-  
--- Time series: Population Vaccinated Percentage
-
-SELECT
- dea.location AS IncomeType,
- dea.date AS Date,
- coalesce(((vac.people_vaccinated*1.0)/dea.population)*100,0) as PopulationVaccinatedPercentage
-FROM
- covid_deaths AS dea
-JOIN
- covid_vaccinations AS vac 
-ON
- dea.location = vac.location 
- AND dea.date = vac.date 
-WHERE
- dea.continent IS NULL and dea.location LIKE '%income'
-ORDER BY
-  CASE
+  CASE -- Order by a custom order    
     WHEN dea.location = 'Low income' THEN 1
     WHEN dea.location = 'Lower middle income' THEN 2
     WHEN dea.location = 'Upper middle income' THEN 3
