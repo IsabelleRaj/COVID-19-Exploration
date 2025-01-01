@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------
 CREATED BY:	  ISABELLE RAJENDIRAN 
 CREATED DATE: 2023-12-18 
-LAST UPDATED: 2024-12-30
+LAST UPDATED: 2025-01-01
 DESCRIPTION:  Queries for the visualisation of the COVID-19 data exploration, 
 		  using Tableau
 -------------------------------------------------------------------------------
@@ -10,92 +10,53 @@ MODIFICATION HISTORY:
 - 2024-12-30
 	- Added additional queries, restructured the code and added comments 
 	  throughout.
+- 2025-01-01
+	- Edited the queries.
 -------------------------------------------------------------------------------
 */
 
--- **GENERAL/LOCATION DASHBOARD** --
-
--- 1: Total number of global cases and deaths
+-- **LOCATION DASHBOARD** --
+ 
+-- 1: Time series of continent-level statistics
 
 CREATE VIEW TableauLocationOne AS
 SELECT
- SUM(CAST(new_cases AS INT)) AS TotalCases,
- SUM(CAST(new_deaths AS INT)) AS TotalDeaths,
- (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 as DeathRatePercentage
+ dea.location AS Continent,
+ dea.population AS PopulationSize,
+ dea.date AS Date,
+ COALESCE(dea.total_cases,0) AS TotalCases,  -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic before the first case/death
+ COALESCE(dea.total_deaths,0) AS TotalDeaths,
+ COALESCE(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage,
+ COALESCE(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
+ ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
 FROM
- covid_deaths
+ covid_deaths AS dea
+JOIN
+ covid_vaccinations AS vac 
+ON
+ dea.location = vac.location 
+ AND dea.date = vac.date 
 WHERE
- continent IS NOT NULL
+ dea.location in ('Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania') AND
+ dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
 ORDER BY
- TotalCases,
- TotalDeaths;
- 
--- NOTE: Stating continent IS NOT NULL is needed to remove these locations: 'World', 'European Union', 'High income','Low income',
--- 'Lower middle income', 'Upper middle income' 
-SELECT
- location
-FROM
- covid_deaths
-WHERE
- continent IS NULL
-GROUP BY
- location;
+ dea.location,
+ dea.date;
 
--- 2: Total cases, deaths and population-level statistics by continent
-
-CREATE VIEW TableauLocationTwo AS
-SELECT 
- location AS Continent,
- population AS PopulationSize,
- MAX(total_cases*1) AS TotalCases, 
- MAX(total_deaths*1) AS TotalDeaths, 
- MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
- MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
- ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
- -- Alternative: (SUM(new_deaths)*1.0)/SUM((new_cases)*1.0)*100 AS DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- location in ('Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania') -- Alternative to continent IS NULL
-GROUP BY 
- location
-ORDER BY
- 1,2; 
-
--- 3: Total cases, deaths and population-level statistics by country
-
-CREATE VIEW TableauLocationThree AS
-SELECT
- location AS Country,
- population AS PopulationSize,
- MAX(total_cases*1) AS TotalCases,
- MAX(total_deaths*1) AS TotalDeaths, 
- MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
- MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
- ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
-FROM
- covid_deaths
-WHERE
- continent IS NOT NULL
-GROUP BY
- location
-HAVING
- TotalCases IS NOT NULL -- Note: Need to remove countries with NULL cases before importing to Tableau. Cannot assume case count is 0 - we just don't have the data in this case.  
-ORDER BY
- PopulationInfectedPercentage DESC;
- 
--- 4: Time series of the total cases, death, infection and vaccination rate across countries
+-- 2: Time series of country-level statistics
 
 -- Note: The population size is constant for each country implying the population size stated is latest known population 
 -- as of date of download and not during the date stated.
 
-CREATE VIEW TableauLocationFour AS
+CREATE VIEW TableauLocationTwo AS
 SELECT
+ dea.continent AS Continent,
  dea.location AS Country,
- dea.date AS Date,
  dea.population AS PopulationSize,
- COALESCE(dea.total_cases,0) AS TotalCases,
- COALESCE(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic before the first case/death
+ dea.date AS Date,
+ COALESCE(dea.total_cases,0) AS TotalCases,  -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic before the first case/death
+ COALESCE(dea.total_deaths,0) AS TotalDeaths,
+ COALESCE(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage,
  COALESCE(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
  ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
 FROM
@@ -110,68 +71,61 @@ WHERE
  dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
 ORDER BY
  dea.location,
- dea.date;
+ dea.date; 
+ 
+-- Note: The time series of the global cases, death and death rate was calculated from the sum of the totals of the above view.
+
+-- 3: Geographical mapping of continent in tableau
+
+CREATE VIEW TableauContinent AS
+SELECT
+ continent AS Continent,
+ location AS Country
+FROM
+ covid_deaths
+WHERE 
+ continent IS NOT NULL;
+ 
  
 -- **INCOME DASHBOARD** --
+ 
+-- 1: Time series of the total cases, total deaths as well as the infection, death and vaccination rates by income group
 
--- 1: Exploring the total cases, deaths and vaccinations for each income group
-
---DROP VIEW IF EXISTS TableauIncomeOne;
-CREATE VIEW TableauIncomeOne AS
+--DROP VIEW IF EXISTS TableauIncome;
+CREATE VIEW TableauIncome AS
 SELECT
  dea.location AS IncomeType,
  dea.population AS PopulationSize,
- MAX(CAST(dea.total_cases AS INT)) AS TotalCases,
- MAX(CAST(dea.total_deaths AS INT)) AS TotalDeaths, 
- MAX(CAST(vac.total_vaccinations AS INT)) AS TotalVaccinationsGiven,
- MAX(CAST(vac.people_vaccinated AS INT)) AS TotalPeopleVaccinated,
- ROUND((MAX(dea.total_deaths*1.0)/MAX(dea.total_cases*1.0))*100,5) AS DeathRatePercentage,
- ROUND((MAX(dea.total_cases*1.0)/dea.population)*100,5) AS PopulationInfectedPercentage,
- ROUND((MAX(vac.people_vaccinated*1.0)/dea.population)*100,5) AS PopulationVaccinatedPercentage
-FROM
- covid_deaths AS dea
-JOIN
- covid_vaccinations AS vac 
-ON
- dea.location = vac.location 
- AND dea.date = vac.date 
-WHERE
- dea.continent IS NULL AND 
- dea.location LIKE '%income'
-GROUP BY
- dea.location
-ORDER BY
-  CASE -- Order by a custom order
-    WHEN dea.location = 'Low income' THEN 1
-    WHEN dea.location = 'Lower middle income' THEN 2
-    WHEN dea.location = 'Upper middle income' THEN 3
-    WHEN dea.location = 'High income' THEN 4
-  END; 
-  
--- 2: Time series of the infection, death and vaccination rates by income group
-
-CREATE VIEW TableauIncomeTwo AS
-SELECT
- dea.location AS IncomeType,
  dea.date AS Date,
- COALESCE(((dea.total_deaths*1.0)/(dea.total_cases*1.0))*100,0) AS DeathRatePercentage, -- Coalesce (replace null value) with zero as it is mostly due to start of pandemic with no cases/deaths
- COALESCE(((dea.total_cases*1.0)/dea.population)*100,0) AS PopulationInfectedPercentage,
- ((vac.people_vaccinated*1.0)/dea.population)*100 AS PopulationVaccinatedPercentage     -- Lots of missing data for after a certain date so cannot coalesce with zero for accurate replacement
+ COALESCE(dea.total_cases,0) AS TotalCases,  -- Replace NULL with 0
+ COALESCE(dea.total_deaths,0) AS TotalDeaths,
+ CASE
+   WHEN dea.date < '2023-01-01' THEN COALESCE(vac.people_vaccinated,0)  -- Replace NULL with 0 before 2023
+   ELSE vac.people_vaccinated -- Do not coalesce for after 2023 to zero as this is real missing data (not the start of pandemic)
+ END AS TotalPeopleVaccinated,
+ COALESCE((dea.total_deaths*1.0)/(dea.total_cases*1.0)*100,0) AS DeathRatePercentage,
+ COALESCE((dea.total_cases*1.0)/dea.population*100,0) AS PopulationInfectedPercentage,
+ CASE
+   WHEN dea.date < '2023-01-01' THEN COALESCE((vac.people_vaccinated*1.0)/dea.population*100,0) 
+   ELSE (vac.people_vaccinated*1.0)/dea.population*100 
+ END AS PopulationVaccinatedPercentage
 FROM
  covid_deaths AS dea
 JOIN
  covid_vaccinations AS vac 
 ON
- dea.location = vac.location 
- AND dea.date = vac.date 
+ dea.location=vac.location
+ AND dea.date=vac.date 
 WHERE
  dea.continent IS NULL AND 
  dea.location LIKE '%income' AND
  dea.date IS NOT '2023-12-07'    -- Last updated date is 2023-12-06 so 07 only has missing values
 ORDER BY
   CASE -- Order by a custom order    
-    WHEN dea.location = 'Low income' THEN 1
-    WHEN dea.location = 'Lower middle income' THEN 2
-    WHEN dea.location = 'Upper middle income' THEN 3
-    WHEN dea.location = 'High income' THEN 4
-  END; 
+    WHEN dea.location='Low income' THEN 1
+    WHEN dea.location='Lower middle income' THEN 2
+    WHEN dea.location='Upper middle income' THEN 3
+    WHEN dea.location='High income' THEN 4
+  END;
+
+  

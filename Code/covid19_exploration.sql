@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------
 CREATED BY:	  ISABELLE RAJENDIRAN 
 CREATED DATE: 2023-12-08 
-LAST UPDATED: 2024-12-30
+LAST UPDATED: 2025-01-01
 DESCRIPTION:  Data exploration of global COVID-19 data, with a focus on 
 		  location and income groups.
 -------------------------------------------------------------------------------
@@ -10,6 +10,8 @@ MODIFICATION HISTORY:
 - 2024-12-30
 	- Added additional queries, restructured the code and added comments 
 	  throughout.
+- 2025-01-01
+	- Edited the queries.
 -------------------------------------------------------------------------------
 */
 
@@ -62,17 +64,38 @@ WHERE
 ORDER BY
  TotalCases,
  TotalDeaths;
+ 
+-- 2: Time series of global cases, deaths and death rate
 
--- 2: Time series showing the cumulative increase in COVID-19 cases and deaths globally
-
+WITH cumulative_data AS (  -- Due to SQLite limitation with use of OVER for complex calculations, a CTE (common table expression) was used instead.
 SELECT DISTINCT
  date AS Date,
- SUM(new_cases) OVER (ORDER BY date) AS CumulativeCaseTotal,
- SUM(new_deaths) OVER (ORDER BY date) AS CumulativeDeathTotal
+ SUM(new_cases) OVER (ORDER BY date) AS TotalCases,
+ SUM(new_deaths) OVER (ORDER BY date) AS TotalDeaths
 FROM
  covid_deaths
 WHERE
- continent IS NOT NULL;
+ continent IS NOT NULL
+)
+SELECT
+ Date,
+ TotalCases,
+ TotalDeaths,
+ ROUND((TotalDeaths * 1.0 / TotalCases) * 100, 3) AS DeathRatePercentage
+FROM
+ cumulative_data;
+ 
+/* Not available for SQLite
+SELECT DISTINCT -- TO remove duplicate dates from each location
+ date AS Date,
+ SUM(new_cases) OVER (ORDER BY date) AS TotalCases,
+ SUM(new_deaths) OVER (ORDER BY date) AS TotalDeaths,
+ ((SUM(new_deaths*1.0))/(SUM(new_cases*1.0))*100) OVER(ORDER BY date) AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL; -- NOTE: Stating continent IS NOT NULL is needed to remove these locations: 'World', 'European Union', 'High income','Low income', 'Lower middle income', 'Upper middle income' 
+*/
  
 -- 3: Time series showing the daily COVID-19 new cases and new deaths globally
 
@@ -200,6 +223,27 @@ GROUP BY
  location
 ORDER BY
  MAX(ROUND((total_deaths*1.0/population)*100,5)) DESC;
+ 
+-- 6: Total cases, deaths and population-level statistics by country
+
+SELECT
+ location AS Country,
+ population AS PopulationSize,
+ MAX(total_cases*1) AS TotalCases,
+ MAX(total_deaths*1) AS TotalDeaths, 
+ MAX(ROUND((total_cases*1.0/population)*100,5)) AS PopulationInfectedPercentage,
+ MAX(ROUND((total_deaths*1.0/population)*100,5)) AS PopulationDeathPercentage,
+ ROUND((MAX(total_deaths*1.0)/(MAX(total_cases*1.0)))*100,5) AS DeathRatePercentage
+FROM
+ covid_deaths
+WHERE
+ continent IS NOT NULL
+GROUP BY
+ location
+HAVING
+ TotalCases IS NOT NULL -- Note: Need to remove countries with NULL cases before importing to Tableau. Cannot assume case count is 0 - we just don't have the data in this case.  
+ORDER BY
+ PopulationInfectedPercentage DESC;
 
 -- **EXPLORATION BY CONTINENT** --
 
@@ -222,7 +266,7 @@ GROUP BY
  location
 ORDER BY
  1,2; 
-
+ 
 -- **EXPLORATION OF VACCINATION DATA** --
 
 -- 1: Total vaccination count per country
