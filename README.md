@@ -1,20 +1,52 @@
-#  Data exploration of global COVID-19 data
+# Data exploration and visualisation of global COVID-19 data 🦠
 
-In this project, I conducted data analysis using SQL (DB browser (SQLite)) on COVID-19 data. 
+## Table of Contents
+1. [Project Description](#project-description)
+2. [Data](#data-source)
+3. [Installation](#installation)
+4. [Dashboards](#dashboards)
+5. [Acknowledgments](#acknowledgement)
 
-### 1. Data collection
-The data obtained between 2020-01-01 to 2023-12-07 by Our World in Data (downloaded from: ourworldindata.org/covid-deaths). 
+## Project Description
+This project focuses on analysing the global COVID-19 pandemic through data exploration and visualisation. Using SQL, I conducted exploratory data analysis to uncover trends, patterns, and key insights related to the progression of the pandemic. The main key insights from my analysis was translated into visualisations on interactive dashboards using tableau.
 
-### 2. Data preprocessing
-The downloaded data was processed in Excel for date format standardisation (converting 'dd/mm/yyyy' to 'yyyy-mm-dd') and to seperate the data into two tables: covid_deaths.csv and covid_vaccinations.csv files.
+**Key pandemic metrics measured:**
+- Cases: Trends in cumulative case totals over time.
+- Deaths: Cumulative death toll progression and death rates.
+- Vaccinations: Trends in population vaccination coverage.
 
-### 3. Data exploration
-I investigated COVID cases, deaths and vaccination numbers across locations i.e., country and continents; and across the timeline of the epidemic. Additionally, I examined the impact of income type on the numbers of cases, deaths and vaccinations. 
+**Categories analysed:**
+- By Location: Comparison of the pandemic's impact across continents (e.g., Africa, Asia, Europe) and individual countries.
+- By Income Groups: Comparison of the pandemic's impact across countries' income groups (i.e., high income, upper middle income, lower middle income, and low income countries) to understand how economic factors influenced infection rates, vaccination progress, and mortality outcomes.
 
-Skills used: Joins, CTE's, temp Tables, windows functions, aggregate functions, view creations and data type conversion. 
+## Data
+### Data Source
+The data was downloaded from [Our World in Data](https://ourworldindata.org/covid-deaths), containing information between 2020-01-01 to 2023-12-07.
+Regarding the income groups, the classification used is by [the World Bank](https://ourworldindata.org/grapher/world-bank-income-groups), and it is based on every country's gross national income (GNI) each year.
 
-### 4. Data Visualisation on Tableau
-I created tableau dashboards displaying Covid-19 cases and deaths, and the impact of income type on Covid-19. These can be accessed via my Tableau profile (https://public.tableau.com/app/profile/isabelle.rajendiran/vizzes), and images can be found in the visualisations folder. The specific queries used for these dashboards can be found as covid_tableau_queries.sql. 
+### Data Pre-processing
+The downloaded data was processed in Excel for date format standardisation (converting 'dd/mm/yyyy' to 'yyyy-mm-dd') and to seperate the data into two tables: `covid_deaths.csv` and `covid_vaccinations.csv` files, for ease of use. 
 
-### Acknowledgements
-Thanks to Alex The Analyst (youtube.com/@AlexTheAnalyst) from which this project was adapted from.
+## Installation
+For this project, I used SQLite and DB browser to conduct my analysis. Refer to the [documentation](https://sqlitebrowser.org/) for further information.
+
+**Folders explanation:**
+- 'Code': Contains two `.sql` files, which contains the SQL queries for the full data exploration, and the queries used for the tableau dashboards.
+- 'Data': Contains the two pre-processed data files as well as the data used for the tableau dashboards (downloaded from the SQL queries). 
+
+**To run the analysis:**
+1. Open your command prompt.
+2. Navigate to your desired directory.
+3. Git clone this repository using the following command:
+   ```bash
+   git clone https://github.com/IsabelleRaj/COVID-19-Exploration
+   ```
+5. Run the `.sql` files in the 'code' folder in your desired environment, using the appropriate data from the 'data' folder.
+
+## Dashboards
+Two interactive dashboards were created using tableau: the [location](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyLocation/ContinentDashboard) analysis and [income group](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyIncome/IncomeComparison) analysis.
+
+Here are images of the dashboards:
+
+## Acknowledgements
+Thanks to [Alex The Analyst](https://www.youtube.com/@AlexTheAnalyst) from which the data analysis was built upon; and [Anthony Smoak](https://anthonysmoak.com/2020/04/25/build-a-tableau-covid-19-dashboard/) for dashboard design inspiration.
