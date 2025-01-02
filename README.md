@@ -10,6 +10,8 @@
 ## Project Description
 This project focuses on analysing the global COVID-19 pandemic through data exploration and visualisation. Using SQL, I conducted exploratory data analysis to uncover trends, patterns, and key insights related to the progression of the pandemic. The main key insights from my analysis was translated into visualisations on interactive dashboards using tableau.
 
+![image](https://github.com/user-attachments/assets/1f00f2c4-7b4a-4246-aedb-cc2e080c16e9)
+
 **Key pandemic metrics measured:**
 - **Cases**: Trends in cumulative case totals over time.
 - **Deaths**: Cumulative death toll progression and death rates.
@@ -49,10 +51,10 @@ Two interactive dashboards were created using tableau: the [location](https://pu
 Here are images of the dashboards, which can also be found in the `Visualisation` folder:
 
 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-  <img src="Visualisation/Income Dashboard Comparison.png" alt="Image 1" style="width: 50%; border: none;"/>
-  <img src="Visualisation/Income Dashboard Individual.png" alt="Image 2" style="width: 50%; border: none;"/>
-  <img src="Visualisation/Location Dashboard Continent.png" alt="Image 3" style="width: 50%; border: none;"/>
-  <img src="Visualisation/Location Dashboard Country.png" alt="Image 4" style="width: 50%; border: none;"/>
+  <img src="Visualisation/Income Dashboard Comparison.png" alt="Image 1" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Income Dashboard Individual.png" alt="Image 2" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Continent.png" alt="Image 3" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Country.png" alt="Image 4" style="width: 45%; border: none;"/>
 </div>
 
 ## Acknowledgements
