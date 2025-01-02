@@ -11,13 +11,13 @@
 This project focuses on analysing the global COVID-19 pandemic through data exploration and visualisation. Using SQL, I conducted exploratory data analysis to uncover trends, patterns, and key insights related to the progression of the pandemic. The main key insights from my analysis was translated into visualisations on interactive dashboards using tableau.
 
 **Key pandemic metrics measured:**
-- Cases: Trends in cumulative case totals over time.
-- Deaths: Cumulative death toll progression and death rates.
-- Vaccinations: Trends in population vaccination coverage.
+- **Cases**: Trends in cumulative case totals over time.
+- **Deaths**: Cumulative death toll progression and death rates.
+- **Vaccinations**: Trends in population vaccination coverage.
 
 **Categories analysed:**
-- By Location: Comparison of the pandemic's impact across continents (e.g., Africa, Asia, Europe) and individual countries.
-- By Income Groups: Comparison of the pandemic's impact across countries' income groups (i.e., high income, upper middle income, lower middle income, and low income countries) to understand how economic factors influenced infection rates, vaccination progress, and mortality outcomes.
+- By **Location**: Comparison of the pandemic's impact across continents (e.g., Africa, Asia, Europe) and individual countries.
+- By **Income Groups**: Comparison of the pandemic's impact across countries' income groups (i.e., high income, upper middle income, lower middle income, and low income countries) to understand how economic factors influenced infection rates, vaccination progress, and mortality outcomes.
 
 ## Data
 ### Data Source
@@ -31,8 +31,8 @@ The downloaded data was processed in Excel for date format standardisation (conv
 For this project, I used SQLite and DB browser to conduct my analysis. Refer to the [documentation](https://sqlitebrowser.org/) for further information.
 
 **Folders explanation:**
-- 'Code': Contains two `.sql` files, which contains the SQL queries for the full data exploration, and the queries used for the tableau dashboards.
-- 'Data': Contains the two pre-processed data files as well as the data used for the tableau dashboards (downloaded from the SQL queries). 
+- `Code`: Contains two `.sql` files, which contains the SQL queries for the full data exploration, and the queries used for the tableau dashboards.
+- `Data`: Contains the two pre-processed data files as well as the data used for the tableau dashboards (downloaded from the SQL queries). 
 
 **To run the analysis:**
 1. Open your command prompt.
@@ -47,6 +47,13 @@ For this project, I used SQLite and DB browser to conduct my analysis. Refer to 
 Two interactive dashboards were created using tableau: the [location](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyLocation/ContinentDashboard) analysis and [income group](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyIncome/IncomeComparison) analysis.
 
 Here are images of the dashboards:
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img src="Visualisation/Income Dashboard Comparison.png" alt="Image 1" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Income Dashboard Individual.png" alt="Image 2" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Continent.png" alt="Image 3" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Country.png" alt="Image 4" style="width: 45%; border: none;"/>
+</div>
 
 ## Acknowledgements
 Thanks to [Alex The Analyst](https://www.youtube.com/@AlexTheAnalyst) from which the data analysis was built upon; and [Anthony Smoak](https://anthonysmoak.com/2020/04/25/build-a-tableau-covid-19-dashboard/) for dashboard design inspiration.
