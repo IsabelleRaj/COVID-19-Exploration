@@ -10,8 +10,6 @@
 ## Project Description
 This project focuses on analysing the global COVID-19 pandemic through data exploration and visualisation. Using SQL, I conducted exploratory data analysis to uncover trends, patterns, and key insights related to the progression of the pandemic. The main key insights from my analysis was translated into visualisations on interactive dashboards using tableau.
 
-<img src="https://github.com/user-attachments/assets/1f00f2c4-7b4a-4246-aedb-cc2e080c16e9" alt="covid" width="300"/>
-
 **Key pandemic metrics measured:**
 - **Cases**: Trends in cumulative case totals over time.
 - **Deaths**: Cumulative death toll progression and death rates.
