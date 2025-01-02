@@ -56,4 +56,6 @@ Here are images of the dashboards, which can also be found in the `Visualisation
 </div>
 
 ## Acknowledgements
+This project was originally created in December 2023 during the early stages of my data analysis journey. I have since revisited and refined it, using the same dataset, to enhance both the code and tableau visualizations for improved insights and presentation.
+
 Thanks to [Alex The Analyst](https://www.youtube.com/@AlexTheAnalyst) from which the data analysis was built upon; and [Anthony Smoak](https://anthonysmoak.com/2020/04/25/build-a-tableau-covid-19-dashboard/) for dashboard design inspiration.
