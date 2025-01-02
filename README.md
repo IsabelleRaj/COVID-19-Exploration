@@ -46,13 +46,13 @@ For this project, I used SQLite and DB browser to conduct my analysis. Refer to 
 ## Dashboards
 Two interactive dashboards were created using tableau: the [location](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyLocation/ContinentDashboard) analysis and [income group](https://public.tableau.com/app/profile/isabelle.rajendiran/viz/COVID-19AnalysisbyIncome/IncomeComparison) analysis.
 
-Here are images of the dashboards:
+Here are images of the dashboards, which can also be found in the `Visualisation` folder:
 
 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-  <img src="Visualisation/Income Dashboard Comparison.png" alt="Image 1" style="width: 45%; border: none;"/>
-  <img src="Visualisation/Income Dashboard Individual.png" alt="Image 2" style="width: 45%; border: none;"/>
-  <img src="Visualisation/Location Dashboard Continent.png" alt="Image 3" style="width: 45%; border: none;"/>
-  <img src="Visualisation/Location Dashboard Country.png" alt="Image 4" style="width: 45%; border: none;"/>
+  <img src="Visualisation/Income Dashboard Comparison.png" alt="Image 1" style="width: 50%; border: none;"/>
+  <img src="Visualisation/Income Dashboard Individual.png" alt="Image 2" style="width: 50%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Continent.png" alt="Image 3" style="width: 50%; border: none;"/>
+  <img src="Visualisation/Location Dashboard Country.png" alt="Image 4" style="width: 50%; border: none;"/>
 </div>
 
 ## Acknowledgements
